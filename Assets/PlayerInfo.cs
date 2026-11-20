@@ -5,15 +5,19 @@ public class PlayerInfo : MonoBehaviour
 {
     public float speed = 5f;
     public float jumpForce = 3f;
-    private bool isGrounded = false;
+
+    [SerializeField] private LayerMask groundLayer;
+    [SerializeField] private float groundCheckDistance = 0.05f;
 
     private Rigidbody2D rb;
+    private BoxCollider2D col;
     private float moveInput;
     private bool jumpRequested;
 
     void Awake()
     {
         rb = GetComponent<Rigidbody2D>();
+        col = GetComponent<BoxCollider2D>();
     }
 
     void Update()
@@ -26,36 +30,39 @@ public class PlayerInfo : MonoBehaviour
         if (Keyboard.current.dKey.isPressed || Keyboard.current.rightArrowKey.isPressed)
             moveInput = 1f;
 
-        if(Keyboard.current.spaceKey.wasPressedThisFrame && isGrounded)
-        {
+        if (Keyboard.current.spaceKey.wasPressedThisFrame)
             jumpRequested = true;
-        }
     }
 
     void FixedUpdate()
     {
         rb.linearVelocity = new Vector2(moveInput * speed, rb.linearVelocity.y);
-        if (jumpRequested && isGrounded)
+
+        if (jumpRequested && IsGrounded())
         {
             rb.linearVelocity = new Vector2(rb.linearVelocity.x, jumpForce);
-            jumpRequested = false;
-            isGrounded = false;
         }
+
+        jumpRequested = false;
     }
 
-    void OnCollisionEnter2D(Collision2D collision)
+    bool IsGrounded()
     {
-        if (collision.gameObject.CompareTag("Ground"))
-        {
-            isGrounded = true;
-        }
+        Bounds b = col.bounds;
+        Vector2 size = new Vector2(b.size.x * 0.9f, b.size.y);
+
+        RaycastHit2D hit = Physics2D.BoxCast(b.center, size, 0f, Vector2.down, groundCheckDistance, groundLayer);
+        return hit.collider != null;
     }
 
-    void OnCollisionExit2D(Collision2D collision)
+    void OnDrawGizmos()
     {
-        if (collision.gameObject.CompareTag("Ground"))
-        {
-            isGrounded = false;
-        }
+        BoxCollider2D c = GetComponent<BoxCollider2D>();
+        if (c == null) return;
+
+        Bounds b = c.bounds;
+        Vector3 size = new Vector3(b.size.x * 0.9f, b.size.y, 0f);
+        Gizmos.color = Color.green;
+        Gizmos.DrawWireCube(b.center + Vector3.down * groundCheckDistance, size);
     }
 }
