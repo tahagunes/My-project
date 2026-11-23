@@ -25,8 +25,11 @@ public class BirdController : MonoBehaviour
         {
             return; // Oyuncu öldüyse, inputları işleme
         }
-        
-        if (Keyboard.current.spaceKey.wasPressedThisFrame)
+        bool tapped =
+    (Keyboard.current != null && Keyboard.current.spaceKey.wasPressedThisFrame) ||
+    (Pointer.current != null && Pointer.current.press.wasPressedThisFrame);
+
+        if (tapped)
         {
             Jump();
         }
